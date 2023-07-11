@@ -1,0 +1,863 @@
+USE [master]
+GO
+/****** Object:  Database [Integrador]    Script Date: 11/07/2023 01:09:21 p. m. ******/
+CREATE DATABASE [Integrador]
+ CONTAINMENT = NONE
+ ON  PRIMARY 
+( NAME = N'Integrador', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL15.SQLEXPRESS\MSSQL\DATA\Integrador.mdf' , SIZE = 8192KB , MAXSIZE = UNLIMITED, FILEGROWTH = 65536KB )
+ LOG ON 
+( NAME = N'Integrador_log', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL15.SQLEXPRESS\MSSQL\DATA\Integrador_log.ldf' , SIZE = 8192KB , MAXSIZE = 2048GB , FILEGROWTH = 65536KB )
+ WITH CATALOG_COLLATION = DATABASE_DEFAULT
+GO
+ALTER DATABASE [Integrador] SET COMPATIBILITY_LEVEL = 150
+GO
+IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))
+begin
+EXEC [Integrador].[dbo].[sp_fulltext_database] @action = 'enable'
+end
+GO
+ALTER DATABASE [Integrador] SET ANSI_NULL_DEFAULT OFF 
+GO
+ALTER DATABASE [Integrador] SET ANSI_NULLS OFF 
+GO
+ALTER DATABASE [Integrador] SET ANSI_PADDING OFF 
+GO
+ALTER DATABASE [Integrador] SET ANSI_WARNINGS OFF 
+GO
+ALTER DATABASE [Integrador] SET ARITHABORT OFF 
+GO
+ALTER DATABASE [Integrador] SET AUTO_CLOSE OFF 
+GO
+ALTER DATABASE [Integrador] SET AUTO_SHRINK OFF 
+GO
+ALTER DATABASE [Integrador] SET AUTO_UPDATE_STATISTICS ON 
+GO
+ALTER DATABASE [Integrador] SET CURSOR_CLOSE_ON_COMMIT OFF 
+GO
+ALTER DATABASE [Integrador] SET CURSOR_DEFAULT  GLOBAL 
+GO
+ALTER DATABASE [Integrador] SET CONCAT_NULL_YIELDS_NULL OFF 
+GO
+ALTER DATABASE [Integrador] SET NUMERIC_ROUNDABORT OFF 
+GO
+ALTER DATABASE [Integrador] SET QUOTED_IDENTIFIER OFF 
+GO
+ALTER DATABASE [Integrador] SET RECURSIVE_TRIGGERS OFF 
+GO
+ALTER DATABASE [Integrador] SET  DISABLE_BROKER 
+GO
+ALTER DATABASE [Integrador] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
+GO
+ALTER DATABASE [Integrador] SET DATE_CORRELATION_OPTIMIZATION OFF 
+GO
+ALTER DATABASE [Integrador] SET TRUSTWORTHY OFF 
+GO
+ALTER DATABASE [Integrador] SET ALLOW_SNAPSHOT_ISOLATION OFF 
+GO
+ALTER DATABASE [Integrador] SET PARAMETERIZATION SIMPLE 
+GO
+ALTER DATABASE [Integrador] SET READ_COMMITTED_SNAPSHOT OFF 
+GO
+ALTER DATABASE [Integrador] SET HONOR_BROKER_PRIORITY OFF 
+GO
+ALTER DATABASE [Integrador] SET RECOVERY SIMPLE 
+GO
+ALTER DATABASE [Integrador] SET  MULTI_USER 
+GO
+ALTER DATABASE [Integrador] SET PAGE_VERIFY CHECKSUM  
+GO
+ALTER DATABASE [Integrador] SET DB_CHAINING OFF 
+GO
+ALTER DATABASE [Integrador] SET FILESTREAM( NON_TRANSACTED_ACCESS = OFF ) 
+GO
+ALTER DATABASE [Integrador] SET TARGET_RECOVERY_TIME = 60 SECONDS 
+GO
+ALTER DATABASE [Integrador] SET DELAYED_DURABILITY = DISABLED 
+GO
+ALTER DATABASE [Integrador] SET ACCELERATED_DATABASE_RECOVERY = OFF  
+GO
+ALTER DATABASE [Integrador] SET QUERY_STORE = OFF
+GO
+USE [Integrador]
+GO
+/****** Object:  UserDefinedFunction [dbo].[ObtenerTotalVentaPorCliente]    Script Date: 11/07/2023 01:09:21 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create function [dbo].[ObtenerTotalVentaPorCliente] (@Id_Cliente int)
+returns money
+as 
+begin 
+	declare @totalventa money
+	select @totalventa = sum(p.Costo_Venta*p.Cantidad)
+	from dbo.Orden o
+	inner join dbo.Producto p on o.ID_Producto = p.ID_Producto
+	where o.ID_Cliente =@Id_Cliente
+	return @totalventa
+
+end
+GO
+/****** Object:  Table [dbo].[Orden_Produccion]    Script Date: 11/07/2023 01:09:21 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Orden_Produccion](
+	[ID_Cliente] [int] NOT NULL,
+	[ID_Produccion] [varchar](10) NOT NULL,
+	[Fecha] [date] NOT NULL,
+ CONSTRAINT [PK_Orden_Produccion] PRIMARY KEY CLUSTERED 
+(
+	[ID_Cliente] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  UserDefinedFunction [dbo].[Ordenes_Cliente]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE FUNCTION [dbo].[Ordenes_Cliente](@ID_Cliente INT)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT OP.ID_Produccion, OP.Fecha, OP.ID_Cliente
+    FROM [dbo].[Orden_Produccion] OP
+    WHERE OP.ID_Cliente = @ID_Cliente
+)
+GO
+/****** Object:  Table [dbo].[Almacen]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Almacen](
+	[ID_Almacen] [varchar](10) NOT NULL,
+	[Nombre_Encargado] [varchar](25) NOT NULL,
+	[Correo_Encargado] [varchar](25) NOT NULL,
+	[Telefono] [varchar](15) NOT NULL,
+	[Calle] [varchar](50) NOT NULL,
+	[Num_Exterior] [varchar](10) NULL,
+	[Num_Interior] [varchar](10) NULL,
+ CONSTRAINT [PK_Almacen] PRIMARY KEY CLUSTERED 
+(
+	[ID_Almacen] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Producto]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Producto](
+	[ID_Producto] [varchar](10) NOT NULL,
+	[Nombre] [varchar](25) NOT NULL,
+	[Descripcion] [varchar](100) NOT NULL,
+	[Cantidad] [int] NOT NULL,
+	[Costo_Compra] [money] NOT NULL,
+	[Costo_Venta] [money] NOT NULL,
+ CONSTRAINT [PK_Producto] PRIMARY KEY CLUSTERED 
+(
+	[ID_Producto] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Producto_En_Almacen]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Producto_En_Almacen](
+	[ID_Producto] [varchar](10) NOT NULL,
+	[ID_Almacen] [varchar](10) NOT NULL,
+ CONSTRAINT [PK_Producto_En_Almacen] PRIMARY KEY CLUSTERED 
+(
+	[ID_Producto] ASC,
+	[ID_Almacen] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  UserDefinedFunction [dbo].[ObtenerProductoAlmacen]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE FUNCTION [dbo].[ObtenerProductoAlmacen](@Producto varchar(10))
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT P.Nombre AS NombreProducto,
+           A.Nombre_Encargado,
+           A.Correo_Encargado,
+           A.Telefono,
+           A.Calle,
+           A.Num_Exterior,
+           A.Num_Interior,
+           P.Costo_Compra,
+           P.Costo_Venta
+    FROM [dbo].[Producto_En_Almacen] PA
+    INNER JOIN [dbo].[Producto] P ON PA.[ID_Producto] = P.[ID_Producto]
+    INNER JOIN [dbo].[Almacen] A ON PA.[ID_Almacen] = A.[ID_Almacen]
+    WHERE P.[ID_Producto] = @Producto
+)
+GO
+/****** Object:  Table [dbo].[Camion]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Camion](
+	[Placas] [varchar](15) NOT NULL,
+	[Tipo_Camion] [varchar](25) NOT NULL,
+	[Capacidad] [real] NOT NULL,
+	[Tipo_Motor] [varchar](25) NOT NULL,
+	[Ejes] [varchar](10) NOT NULL,
+ CONSTRAINT [PK_Camion] PRIMARY KEY CLUSTERED 
+(
+	[Placas] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Chofer]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Chofer](
+	[ID_Chofer] [varchar](10) NOT NULL,
+	[Nombre] [varchar](25) NOT NULL,
+	[Segundo_Nombre] [varchar](25) NULL,
+	[Apellido_Paterno] [varchar](25) NOT NULL,
+	[Apellido_Materno] [varchar](25) NOT NULL,
+	[Num_Licencia] [int] NOT NULL,
+	[ID_Camion] [varchar](10) NOT NULL,
+ CONSTRAINT [PK_Chofer] PRIMARY KEY CLUSTERED 
+(
+	[ID_Chofer] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Cliente]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Cliente](
+	[ID_Cliente] [int] NOT NULL,
+	[Nombre] [varchar](25) NOT NULL,
+	[Apellido_Paterno] [varchar](25) NOT NULL,
+	[Apellido_Materno] [varchar](25) NOT NULL,
+	[Telefono] [varchar](15) NOT NULL,
+	[Correo] [varchar](50) NOT NULL,
+	[RFC] [varchar](20) NOT NULL,
+	[Calle] [varchar](25) NOT NULL,
+	[Num_Interior] [varchar](10) NULL,
+	[Num_Exterior] [varchar](10) NULL,
+	[Codigo_Postal] [int] NOT NULL,
+ CONSTRAINT [PK_Cliente] PRIMARY KEY CLUSTERED 
+(
+	[ID_Cliente] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Responsable_Entrega]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Responsable_Entrega](
+	[ID_Cliente] [int] NOT NULL,
+	[ID_Chofer] [varchar](10) NOT NULL,
+ CONSTRAINT [PK_Responsable_Entrega] PRIMARY KEY CLUSTERED 
+(
+	[ID_Cliente] ASC,
+	[ID_Chofer] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Unidad_Chofer]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Unidad_Chofer](
+	[ID_Chofer] [varchar](10) NOT NULL,
+	[Placas] [varchar](15) NOT NULL,
+ CONSTRAINT [PK_Unidad_Chofer] PRIMARY KEY CLUSTERED 
+(
+	[ID_Chofer] ASC,
+	[Placas] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  UserDefinedFunction [dbo].[ObtenerCamionChoferCliente]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE FUNCTION [dbo].[ObtenerCamionChoferCliente](@ID_Cliente int)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT C.ID_Cliente, C.Nombre AS NombreCliente, C.Apellido_Paterno AS ApellidoCliente, C.Apellido_Materno AS ApellidoMaterno,
+           CH.ID_Chofer, CH.Nombre AS NombreChofer, CH.Apellido_Paterno AS ApellidoChofer, CH.Apellido_Materno AS ApellidoMaternoChofer,
+           CA.Placas, CA.Tipo_Camion, CA.Capacidad, CA.Tipo_Motor, CA.Ejes
+    FROM dbo.Cliente C
+    INNER JOIN dbo.Responsable_Entrega RE ON C.ID_Cliente = RE.ID_Cliente
+    INNER JOIN dbo.Chofer CH ON RE.ID_Chofer = CH.ID_Chofer
+    INNER JOIN dbo.Unidad_Chofer UC ON CH.ID_Chofer = UC.ID_Chofer
+    INNER JOIN dbo.Camion CA ON UC.Placas = CA.Placas
+    WHERE C.ID_Cliente = @ID_Cliente
+)
+GO
+/****** Object:  Table [dbo].[Orden]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Orden](
+	[ID_Producto] [varchar](10) NOT NULL,
+	[ID_Cliente] [int] NOT NULL,
+ CONSTRAINT [PK_Orden] PRIMARY KEY CLUSTERED 
+(
+	[ID_Producto] ASC,
+	[ID_Cliente] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[vistaproducto]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+Create view [dbo].[vistaproducto] as
+Select a.ID_Producto, a.Nombre, a.Cantidad, a.Costo_Compra,
+SUM(1) as TotalOrdenes
+from Producto a
+JOIN Orden b on a.ID_Producto = b.ID_Producto 
+GROUP BY a.ID_Producto, a.Nombre, a.Cantidad, a.Costo_Compra;
+GO
+/****** Object:  View [dbo].[OrdenesClientes]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+Create view [dbo].[OrdenesClientes] as
+Select a.ID_Cliente, a.Nombre, Count(*) as TotalPedidos
+from Cliente a
+JOIN Orden_Produccion b on a.ID_Cliente = b.ID_Cliente 
+GROUP BY a.ID_Cliente, a.Nombre;
+GO
+/****** Object:  View [dbo].[InventarioBajo]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+Create view [dbo].[InventarioBajo] as
+Select ID_Producto, Nombre, Cantidad
+from Producto
+Where Cantidad <20;
+GO
+/****** Object:  View [dbo].[Vista_Chofer]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+Create view [dbo].[Vista_Chofer] as
+Select a.ID_Chofer, a.ID_Camion, a.Num_Licencia, b.Placas
+from Chofer a
+JOIN Unidad_Chofer b on a.ID_Chofer = b.ID_Chofer 
+GROUP BY a.ID_Chofer, a.ID_Camion, a.Num_Licencia, b.Placas;
+GO
+/****** Object:  Table [dbo].[ID_Pais_Proveedor]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[ID_Pais_Proveedor](
+	[ID_Pais] [varchar](10) NOT NULL,
+	[ID_Proveedor] [int] NOT NULL,
+ CONSTRAINT [PK_ID_Pais_Proveedor] PRIMARY KEY CLUSTERED 
+(
+	[ID_Pais] ASC,
+	[ID_Proveedor] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Log_cliente]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Log_cliente](
+	[ID_Log] [int] IDENTITY(1,1) NOT NULL,
+	[Usuario] [nvarchar](50) NOT NULL,
+	[Accion] [nvarchar](25) NOT NULL,
+	[Fecha] [datetime] NOT NULL,
+	[Tabla] [nvarchar](25) NOT NULL,
+	[ID_Cliente] [int] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[ID_Log] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Materia_Prima]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Materia_Prima](
+	[ID_Material] [varchar](10) NOT NULL,
+	[Nombre] [varchar](50) NOT NULL,
+	[Cantidad] [int] NOT NULL,
+ CONSTRAINT [PK_Materia_Prima] PRIMARY KEY CLUSTERED 
+(
+	[ID_Material] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Pais_Cliente]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Pais_Cliente](
+	[ID_Cliente] [int] NOT NULL,
+	[ID_Pais] [int] NOT NULL,
+	[Nombre_Pais] [varchar](25) NOT NULL,
+ CONSTRAINT [PK_Pais_Cliente] PRIMARY KEY CLUSTERED 
+(
+	[ID_Cliente] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[PaisProveedor]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[PaisProveedor](
+	[ID_Pais] [varchar](10) NOT NULL,
+	[Nombre_Pais] [varchar](50) NOT NULL,
+ CONSTRAINT [PK_PaisProveedor] PRIMARY KEY CLUSTERED 
+(
+	[ID_Pais] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Proveedor]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Proveedor](
+	[ID_Proveedor] [int] NOT NULL,
+	[Nombre] [varchar](50) NOT NULL,
+	[Num_Telefonico] [varchar](15) NULL,
+	[Correo] [varchar](25) NULL,
+	[RFC] [varchar](20) NOT NULL,
+	[Nombre_Calle] [varchar](25) NOT NULL,
+	[Num_Exterior] [varchar](10) NULL,
+	[Num_Interior] [varchar](10) NULL,
+	[Codigo_Postal] [int] NOT NULL,
+ CONSTRAINT [PK_Proveedor] PRIMARY KEY CLUSTERED 
+(
+	[ID_Proveedor] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Solicitud_Material]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Solicitud_Material](
+	[ID_Cliente] [int] NOT NULL,
+	[ID_Material] [varchar](10) NOT NULL,
+ CONSTRAINT [PK_Solicitud_Material] PRIMARY KEY CLUSTERED 
+(
+	[ID_Cliente] ASC,
+	[ID_Material] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Vende]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Vende](
+	[ID_Proveedor] [int] NOT NULL,
+	[ID_Producto] [varchar](10) NOT NULL,
+ CONSTRAINT [PK_Vende] PRIMARY KEY CLUSTERED 
+(
+	[ID_Proveedor] ASC,
+	[ID_Producto] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+INSERT [dbo].[Almacen] ([ID_Almacen], [Nombre_Encargado], [Correo_Encargado], [Telefono], [Calle], [Num_Exterior], [Num_Interior]) VALUES (N'AL001', N'Fred', N'Fred@hotmail.com', N'4421236541', N'Av. 1', N'402', N'722')
+INSERT [dbo].[Almacen] ([ID_Almacen], [Nombre_Encargado], [Correo_Encargado], [Telefono], [Calle], [Num_Exterior], [Num_Interior]) VALUES (N'AL002', N'Jesus', N'Jesus@hotmail.com', N'4428180722', N'Av. 2', N'403', N'798')
+INSERT [dbo].[Almacen] ([ID_Almacen], [Nombre_Encargado], [Correo_Encargado], [Telefono], [Calle], [Num_Exterior], [Num_Interior]) VALUES (N'AL003', N'Alma', N'Alma@gmail.com', N'4429517538', N'Av. 3', N'657', N'485')
+INSERT [dbo].[Almacen] ([ID_Almacen], [Nombre_Encargado], [Correo_Encargado], [Telefono], [Calle], [Num_Exterior], [Num_Interior]) VALUES (N'AL004', N'Paco', N'Paco@hotmail.com', N'4421648594', N'Av. 4', N'482', NULL)
+INSERT [dbo].[Almacen] ([ID_Almacen], [Nombre_Encargado], [Correo_Encargado], [Telefono], [Calle], [Num_Exterior], [Num_Interior]) VALUES (N'AL005', N'Simon', N'Simon@gmail.com', N'4421568497', N'Av. 5', N'164', N'192')
+GO
+INSERT [dbo].[Camion] ([Placas], [Tipo_Camion], [Capacidad], [Tipo_Motor], [Ejes]) VALUES (N'UKP2017', N'Carga', 20, N'Diesel', N'6')
+INSERT [dbo].[Camion] ([Placas], [Tipo_Camion], [Capacidad], [Tipo_Motor], [Ejes]) VALUES (N'UKP6424', N'Comercial', 2, N'Gasolina', N'2')
+INSERT [dbo].[Camion] ([Placas], [Tipo_Camion], [Capacidad], [Tipo_Motor], [Ejes]) VALUES (N'UKT8219', N'Carga', 20, N'Diesel', N'5')
+INSERT [dbo].[Camion] ([Placas], [Tipo_Camion], [Capacidad], [Tipo_Motor], [Ejes]) VALUES (N'UMT2324', N'Carga', 18, N'Diesel', N'4')
+INSERT [dbo].[Camion] ([Placas], [Tipo_Camion], [Capacidad], [Tipo_Motor], [Ejes]) VALUES (N'URL6524', N'Carga', 10, N'Gasolina', N'3')
+GO
+INSERT [dbo].[Chofer] ([ID_Chofer], [Nombre], [Segundo_Nombre], [Apellido_Paterno], [Apellido_Materno], [Num_Licencia], [ID_Camion]) VALUES (N'IDM100', N'Carlos', NULL, N'Moreno', N'Perez', 2210, N'KWT100')
+INSERT [dbo].[Chofer] ([ID_Chofer], [Nombre], [Segundo_Nombre], [Apellido_Paterno], [Apellido_Materno], [Num_Licencia], [ID_Camion]) VALUES (N'IDM101', N'Francisco', N'Javier', N'Sinecio', N'Zuñiga', 4685, N'MAC101')
+INSERT [dbo].[Chofer] ([ID_Chofer], [Nombre], [Segundo_Nombre], [Apellido_Paterno], [Apellido_Materno], [Num_Licencia], [ID_Camion]) VALUES (N'IDM102', N'Fred', N'Gonzalo', N'Urbina', N'Barcenas', 4875, N'VOL102')
+INSERT [dbo].[Chofer] ([ID_Chofer], [Nombre], [Segundo_Nombre], [Apellido_Paterno], [Apellido_Materno], [Num_Licencia], [ID_Camion]) VALUES (N'IDM103', N'Jesus', N'Eduardo', N'Gutierrez', N'Hernandez', 1648, N'KWT103')
+INSERT [dbo].[Chofer] ([ID_Chofer], [Nombre], [Segundo_Nombre], [Apellido_Paterno], [Apellido_Materno], [Num_Licencia], [ID_Camion]) VALUES (N'IDM104', N'Alma', N'Angelica', N'Duran', N'Hernandez', 2264, N'PG104')
+GO
+INSERT [dbo].[Cliente] ([ID_Cliente], [Nombre], [Apellido_Paterno], [Apellido_Materno], [Telefono], [Correo], [RFC], [Calle], [Num_Interior], [Num_Exterior], [Codigo_Postal]) VALUES (100, N'Jesus', N'Gutierrez', N'Hernandez', N'4428180722', N'Jesus@gmail.com', N'JUGH784', N'Av. 1', NULL, N'46', 29040)
+INSERT [dbo].[Cliente] ([ID_Cliente], [Nombre], [Apellido_Paterno], [Apellido_Materno], [Telefono], [Correo], [RFC], [Calle], [Num_Interior], [Num_Exterior], [Codigo_Postal]) VALUES (101, N'Fred', N'Urbina', N'Barcenas', N'4421233215', N'Fred@gmail.com', N'FRED495E1', N'Av. 2', N'4A', N'50', 76094)
+INSERT [dbo].[Cliente] ([ID_Cliente], [Nombre], [Apellido_Paterno], [Apellido_Materno], [Telefono], [Correo], [RFC], [Calle], [Num_Interior], [Num_Exterior], [Codigo_Postal]) VALUES (102, N'Alma', N'Duran', N'Hernandez', N'4425978645', N'Alma@gmail.com', N'ALMA47561', N'Av. 3', NULL, N'164', 79046)
+INSERT [dbo].[Cliente] ([ID_Cliente], [Nombre], [Apellido_Paterno], [Apellido_Materno], [Telefono], [Correo], [RFC], [Calle], [Num_Interior], [Num_Exterior], [Codigo_Postal]) VALUES (103, N'Francisco', N'Castillo', N'Velazquez', N'4421596843', N'Francisco@gmail.com', N'FRAN75480', N'Av. 4', NULL, N'849', 70495)
+INSERT [dbo].[Cliente] ([ID_Cliente], [Nombre], [Apellido_Paterno], [Apellido_Materno], [Telefono], [Correo], [RFC], [Calle], [Num_Interior], [Num_Exterior], [Codigo_Postal]) VALUES (104, N'Carlos', N'Perez', N'Ortega', N'4421642003', N'Carlos@hotmail.com', N'CAPO49857', N'Av. 5', N'7B', N'1048', 55680)
+INSERT [dbo].[Cliente] ([ID_Cliente], [Nombre], [Apellido_Paterno], [Apellido_Materno], [Telefono], [Correo], [RFC], [Calle], [Num_Interior], [Num_Exterior], [Codigo_Postal]) VALUES (106, N'Prueba', N'De', N'Update', N'4682459761', N'Prueba@hotmail.com', N'PRU864E96', N'Av. Log', N'4B', N'7458', 76409)
+INSERT [dbo].[Cliente] ([ID_Cliente], [Nombre], [Apellido_Paterno], [Apellido_Materno], [Telefono], [Correo], [RFC], [Calle], [Num_Interior], [Num_Exterior], [Codigo_Postal]) VALUES (107, N'Cesar', N'Sanchez', N'Alegria', N'9616088418', N'Cesar@gmail.com', N'CSR75841E', N'Av. Cesar', NULL, N'154', 29059)
+INSERT [dbo].[Cliente] ([ID_Cliente], [Nombre], [Apellido_Paterno], [Apellido_Materno], [Telefono], [Correo], [RFC], [Calle], [Num_Interior], [Num_Exterior], [Codigo_Postal]) VALUES (108, N'Prueba', N'Prueba', N'Prueba', N'1594861523', N'Prueba@yahoo.com.mx', N'PRUE426815', N'Av. Prueba', NULL, N'487', 30612)
+GO
+INSERT [dbo].[ID_Pais_Proveedor] ([ID_Pais], [ID_Proveedor]) VALUES (N'AUS75', 103)
+INSERT [dbo].[ID_Pais_Proveedor] ([ID_Pais], [ID_Proveedor]) VALUES (N'EG485', 104)
+INSERT [dbo].[ID_Pais_Proveedor] ([ID_Pais], [ID_Proveedor]) VALUES (N'EU911', 100)
+INSERT [dbo].[ID_Pais_Proveedor] ([ID_Pais], [ID_Proveedor]) VALUES (N'MX486', 102)
+INSERT [dbo].[ID_Pais_Proveedor] ([ID_Pais], [ID_Proveedor]) VALUES (N'SP740', 101)
+GO
+SET IDENTITY_INSERT [dbo].[Log_cliente] ON 
+
+INSERT [dbo].[Log_cliente] ([ID_Log], [Usuario], [Accion], [Fecha], [Tabla], [ID_Cliente]) VALUES (1, N'dbo', N'insert', CAST(N'2023-07-06T21:25:41.860' AS DateTime), N'persona', 107)
+INSERT [dbo].[Log_cliente] ([ID_Log], [Usuario], [Accion], [Fecha], [Tabla], [ID_Cliente]) VALUES (2, N'dbo', N'delete', CAST(N'2023-07-06T21:29:19.223' AS DateTime), N'persona', 105)
+INSERT [dbo].[Log_cliente] ([ID_Log], [Usuario], [Accion], [Fecha], [Tabla], [ID_Cliente]) VALUES (8, N'dbo', N'update', CAST(N'2023-07-06T21:32:30.367' AS DateTime), N'persona', 106)
+INSERT [dbo].[Log_cliente] ([ID_Log], [Usuario], [Accion], [Fecha], [Tabla], [ID_Cliente]) VALUES (9, N'dbo', N'insert', CAST(N'2023-07-07T11:47:50.180' AS DateTime), N'persona', 108)
+INSERT [dbo].[Log_cliente] ([ID_Log], [Usuario], [Accion], [Fecha], [Tabla], [ID_Cliente]) VALUES (12, N'dbo', N'delete', CAST(N'2023-07-07T11:48:56.287' AS DateTime), N'persona', 108)
+INSERT [dbo].[Log_cliente] ([ID_Log], [Usuario], [Accion], [Fecha], [Tabla], [ID_Cliente]) VALUES (13, N'dbo', N'update', CAST(N'2023-07-07T11:49:07.173' AS DateTime), N'persona', 106)
+INSERT [dbo].[Log_cliente] ([ID_Log], [Usuario], [Accion], [Fecha], [Tabla], [ID_Cliente]) VALUES (14, N'dbo', N'insert', CAST(N'2023-07-07T18:11:18.157' AS DateTime), N'persona', 108)
+SET IDENTITY_INSERT [dbo].[Log_cliente] OFF
+GO
+INSERT [dbo].[Materia_Prima] ([ID_Material], [Nombre], [Cantidad]) VALUES (N'4140T', N'Acero tratado', 1000)
+INSERT [dbo].[Materia_Prima] ([ID_Material], [Nombre], [Cantidad]) VALUES (N'AC200', N'Acero', 500)
+INSERT [dbo].[Materia_Prima] ([ID_Material], [Nombre], [Cantidad]) VALUES (N'MNG100', N'Mangera', 600)
+INSERT [dbo].[Materia_Prima] ([ID_Material], [Nombre], [Cantidad]) VALUES (N'PLAS100', N'Plastico', 300)
+INSERT [dbo].[Materia_Prima] ([ID_Material], [Nombre], [Cantidad]) VALUES (N'TUB150', N'Tubería aluminio', 400)
+GO
+INSERT [dbo].[Orden] ([ID_Producto], [ID_Cliente]) VALUES (N'1', 102)
+INSERT [dbo].[Orden] ([ID_Producto], [ID_Cliente]) VALUES (N'1', 104)
+INSERT [dbo].[Orden] ([ID_Producto], [ID_Cliente]) VALUES (N'1', 106)
+INSERT [dbo].[Orden] ([ID_Producto], [ID_Cliente]) VALUES (N'2', 106)
+INSERT [dbo].[Orden] ([ID_Producto], [ID_Cliente]) VALUES (N'3', 102)
+INSERT [dbo].[Orden] ([ID_Producto], [ID_Cliente]) VALUES (N'4', 101)
+INSERT [dbo].[Orden] ([ID_Producto], [ID_Cliente]) VALUES (N'4', 103)
+INSERT [dbo].[Orden] ([ID_Producto], [ID_Cliente]) VALUES (N'5', 100)
+INSERT [dbo].[Orden] ([ID_Producto], [ID_Cliente]) VALUES (N'5', 104)
+GO
+INSERT [dbo].[Orden_Produccion] ([ID_Cliente], [ID_Produccion], [Fecha]) VALUES (100, N'FR100', CAST(N'2023-07-06' AS Date))
+INSERT [dbo].[Orden_Produccion] ([ID_Cliente], [ID_Produccion], [Fecha]) VALUES (101, N'BO150', CAST(N'2023-07-06' AS Date))
+INSERT [dbo].[Orden_Produccion] ([ID_Cliente], [ID_Produccion], [Fecha]) VALUES (102, N'FA200', CAST(N'2023-07-06' AS Date))
+INSERT [dbo].[Orden_Produccion] ([ID_Cliente], [ID_Produccion], [Fecha]) VALUES (103, N'PA250', CAST(N'2023-07-06' AS Date))
+INSERT [dbo].[Orden_Produccion] ([ID_Cliente], [ID_Produccion], [Fecha]) VALUES (104, N'RI300', CAST(N'2023-07-06' AS Date))
+GO
+INSERT [dbo].[Pais_Cliente] ([ID_Cliente], [ID_Pais], [Nombre_Pais]) VALUES (100, 1, N'Mexico')
+INSERT [dbo].[Pais_Cliente] ([ID_Cliente], [ID_Pais], [Nombre_Pais]) VALUES (101, 2, N'Arabia')
+INSERT [dbo].[Pais_Cliente] ([ID_Cliente], [ID_Pais], [Nombre_Pais]) VALUES (102, 3, N'China')
+INSERT [dbo].[Pais_Cliente] ([ID_Cliente], [ID_Pais], [Nombre_Pais]) VALUES (103, 4, N'Japón')
+INSERT [dbo].[Pais_Cliente] ([ID_Cliente], [ID_Pais], [Nombre_Pais]) VALUES (104, 5, N'USA')
+GO
+INSERT [dbo].[PaisProveedor] ([ID_Pais], [Nombre_Pais]) VALUES (N'AUS75', N'Australia')
+INSERT [dbo].[PaisProveedor] ([ID_Pais], [Nombre_Pais]) VALUES (N'EG485', N'Egipto')
+INSERT [dbo].[PaisProveedor] ([ID_Pais], [Nombre_Pais]) VALUES (N'EU911', N'Estados Unidos')
+INSERT [dbo].[PaisProveedor] ([ID_Pais], [Nombre_Pais]) VALUES (N'MX486', N'Mexico')
+INSERT [dbo].[PaisProveedor] ([ID_Pais], [Nombre_Pais]) VALUES (N'SP740', N'España')
+GO
+INSERT [dbo].[Producto] ([ID_Producto], [Nombre], [Descripcion], [Cantidad], [Costo_Compra], [Costo_Venta]) VALUES (N'1', N'Acero', N'Barra de acero de 30 cm de longitud', 25, 10.0100, 15.5000)
+INSERT [dbo].[Producto] ([ID_Producto], [Nombre], [Descripcion], [Cantidad], [Costo_Compra], [Costo_Venta]) VALUES (N'2', N'Diamante', N'Un diamante pulido y con forma tradicional', 10, 5000.0000, 7500.0000)
+INSERT [dbo].[Producto] ([ID_Producto], [Nombre], [Descripcion], [Cantidad], [Costo_Compra], [Costo_Venta]) VALUES (N'3', N'Madera de Roble', N'Planchas de madera de roble', 50, 120.0000, 210.0000)
+INSERT [dbo].[Producto] ([ID_Producto], [Nombre], [Descripcion], [Cantidad], [Costo_Compra], [Costo_Venta]) VALUES (N'4', N'Goma', N'Esferas hechas de goma a base de petroleo', 100, 20.0000, 30.0000)
+INSERT [dbo].[Producto] ([ID_Producto], [Nombre], [Descripcion], [Cantidad], [Costo_Compra], [Costo_Venta]) VALUES (N'5', N'Grafito', N'Barras delgadas de grafito', 30, 15.0000, 20.0000)
+GO
+INSERT [dbo].[Producto_En_Almacen] ([ID_Producto], [ID_Almacen]) VALUES (N'1', N'AL002')
+INSERT [dbo].[Producto_En_Almacen] ([ID_Producto], [ID_Almacen]) VALUES (N'2', N'AL005')
+INSERT [dbo].[Producto_En_Almacen] ([ID_Producto], [ID_Almacen]) VALUES (N'3', N'AL001')
+INSERT [dbo].[Producto_En_Almacen] ([ID_Producto], [ID_Almacen]) VALUES (N'4', N'AL003')
+INSERT [dbo].[Producto_En_Almacen] ([ID_Producto], [ID_Almacen]) VALUES (N'5', N'AL004')
+GO
+INSERT [dbo].[Proveedor] ([ID_Proveedor], [Nombre], [Num_Telefonico], [Correo], [RFC], [Nombre_Calle], [Num_Exterior], [Num_Interior], [Codigo_Postal]) VALUES (100, N'Tuberia', N'4421231232', N'Tubo@hotmail.com', N'TUB24', N'Av. 8', N'1402', NULL, 76020)
+INSERT [dbo].[Proveedor] ([ID_Proveedor], [Nombre], [Num_Telefonico], [Correo], [RFC], [Nombre_Calle], [Num_Exterior], [Num_Interior], [Codigo_Postal]) VALUES (101, N'Pastas', N'4421231323', N'Pastas@hotmail.com', N'PAS2342', N'Av. 9', N'804', N'2A', 76020)
+INSERT [dbo].[Proveedor] ([ID_Proveedor], [Nombre], [Num_Telefonico], [Correo], [RFC], [Nombre_Calle], [Num_Exterior], [Num_Interior], [Codigo_Postal]) VALUES (102, N'Frenos', N'4421233113', N'Frenos@gmail.com', N'FRE49586', N'Av. 10', N'468', N'3A', 76020)
+INSERT [dbo].[Proveedor] ([ID_Proveedor], [Nombre], [Num_Telefonico], [Correo], [RFC], [Nombre_Calle], [Num_Exterior], [Num_Interior], [Codigo_Postal]) VALUES (103, N'Diamantes', N'4421233123', N'Diamantes@gmail.com', N'DIA4857', N'AV. 11', N'649', N'5D', 76020)
+INSERT [dbo].[Proveedor] ([ID_Proveedor], [Nombre], [Num_Telefonico], [Correo], [RFC], [Nombre_Calle], [Num_Exterior], [Num_Interior], [Codigo_Postal]) VALUES (104, N'Gomas', N'4421233652', N'Gomas@hotmail.com', N'GOM4821', N'Av. 12', N'420', N'7Q', 76020)
+GO
+INSERT [dbo].[Responsable_Entrega] ([ID_Cliente], [ID_Chofer]) VALUES (100, N'IDM100')
+INSERT [dbo].[Responsable_Entrega] ([ID_Cliente], [ID_Chofer]) VALUES (101, N'IDM104')
+INSERT [dbo].[Responsable_Entrega] ([ID_Cliente], [ID_Chofer]) VALUES (102, N'IDM101')
+INSERT [dbo].[Responsable_Entrega] ([ID_Cliente], [ID_Chofer]) VALUES (103, N'IDM102')
+INSERT [dbo].[Responsable_Entrega] ([ID_Cliente], [ID_Chofer]) VALUES (104, N'IDM103')
+GO
+INSERT [dbo].[Solicitud_Material] ([ID_Cliente], [ID_Material]) VALUES (100, N'AC200')
+INSERT [dbo].[Solicitud_Material] ([ID_Cliente], [ID_Material]) VALUES (100, N'PLAS100')
+INSERT [dbo].[Solicitud_Material] ([ID_Cliente], [ID_Material]) VALUES (101, N'PLAS100')
+INSERT [dbo].[Solicitud_Material] ([ID_Cliente], [ID_Material]) VALUES (102, N'4140T')
+INSERT [dbo].[Solicitud_Material] ([ID_Cliente], [ID_Material]) VALUES (103, N'MNG100')
+INSERT [dbo].[Solicitud_Material] ([ID_Cliente], [ID_Material]) VALUES (104, N'TUB150')
+GO
+INSERT [dbo].[Unidad_Chofer] ([ID_Chofer], [Placas]) VALUES (N'IDM100', N'UKP2017')
+INSERT [dbo].[Unidad_Chofer] ([ID_Chofer], [Placas]) VALUES (N'IDM101', N'URL6524')
+INSERT [dbo].[Unidad_Chofer] ([ID_Chofer], [Placas]) VALUES (N'IDM103', N'UKT8219')
+INSERT [dbo].[Unidad_Chofer] ([ID_Chofer], [Placas]) VALUES (N'IDM103', N'UMT2324')
+INSERT [dbo].[Unidad_Chofer] ([ID_Chofer], [Placas]) VALUES (N'IDM104', N'UKP6424')
+GO
+INSERT [dbo].[Vende] ([ID_Proveedor], [ID_Producto]) VALUES (100, N'1')
+INSERT [dbo].[Vende] ([ID_Proveedor], [ID_Producto]) VALUES (100, N'4')
+INSERT [dbo].[Vende] ([ID_Proveedor], [ID_Producto]) VALUES (101, N'1')
+INSERT [dbo].[Vende] ([ID_Proveedor], [ID_Producto]) VALUES (101, N'2')
+INSERT [dbo].[Vende] ([ID_Proveedor], [ID_Producto]) VALUES (103, N'3')
+INSERT [dbo].[Vende] ([ID_Proveedor], [ID_Producto]) VALUES (104, N'4')
+INSERT [dbo].[Vende] ([ID_Proveedor], [ID_Producto]) VALUES (104, N'5')
+GO
+ALTER TABLE [dbo].[Log_cliente] ADD  DEFAULT (user_name()) FOR [Usuario]
+GO
+ALTER TABLE [dbo].[ID_Pais_Proveedor]  WITH CHECK ADD  CONSTRAINT [FK_ID_Pais_Proveedor_PaisProveedor] FOREIGN KEY([ID_Pais])
+REFERENCES [dbo].[PaisProveedor] ([ID_Pais])
+GO
+ALTER TABLE [dbo].[ID_Pais_Proveedor] CHECK CONSTRAINT [FK_ID_Pais_Proveedor_PaisProveedor]
+GO
+ALTER TABLE [dbo].[ID_Pais_Proveedor]  WITH CHECK ADD  CONSTRAINT [FK_ID_Pais_Proveedor_Proveedor] FOREIGN KEY([ID_Proveedor])
+REFERENCES [dbo].[Proveedor] ([ID_Proveedor])
+GO
+ALTER TABLE [dbo].[ID_Pais_Proveedor] CHECK CONSTRAINT [FK_ID_Pais_Proveedor_Proveedor]
+GO
+ALTER TABLE [dbo].[Orden]  WITH CHECK ADD  CONSTRAINT [FK_Orden_Cliente] FOREIGN KEY([ID_Cliente])
+REFERENCES [dbo].[Cliente] ([ID_Cliente])
+GO
+ALTER TABLE [dbo].[Orden] CHECK CONSTRAINT [FK_Orden_Cliente]
+GO
+ALTER TABLE [dbo].[Orden]  WITH CHECK ADD  CONSTRAINT [FK_Orden_Producto] FOREIGN KEY([ID_Producto])
+REFERENCES [dbo].[Producto] ([ID_Producto])
+GO
+ALTER TABLE [dbo].[Orden] CHECK CONSTRAINT [FK_Orden_Producto]
+GO
+ALTER TABLE [dbo].[Orden_Produccion]  WITH CHECK ADD  CONSTRAINT [FK_Orden_Produccion_Cliente] FOREIGN KEY([ID_Cliente])
+REFERENCES [dbo].[Cliente] ([ID_Cliente])
+GO
+ALTER TABLE [dbo].[Orden_Produccion] CHECK CONSTRAINT [FK_Orden_Produccion_Cliente]
+GO
+ALTER TABLE [dbo].[Pais_Cliente]  WITH CHECK ADD  CONSTRAINT [FK_Pais_Cliente_Cliente] FOREIGN KEY([ID_Cliente])
+REFERENCES [dbo].[Cliente] ([ID_Cliente])
+GO
+ALTER TABLE [dbo].[Pais_Cliente] CHECK CONSTRAINT [FK_Pais_Cliente_Cliente]
+GO
+ALTER TABLE [dbo].[Producto_En_Almacen]  WITH CHECK ADD  CONSTRAINT [FK_Producto_En_Almacen_Almacen] FOREIGN KEY([ID_Almacen])
+REFERENCES [dbo].[Almacen] ([ID_Almacen])
+GO
+ALTER TABLE [dbo].[Producto_En_Almacen] CHECK CONSTRAINT [FK_Producto_En_Almacen_Almacen]
+GO
+ALTER TABLE [dbo].[Producto_En_Almacen]  WITH CHECK ADD  CONSTRAINT [FK_Producto_En_Almacen_Producto] FOREIGN KEY([ID_Producto])
+REFERENCES [dbo].[Producto] ([ID_Producto])
+GO
+ALTER TABLE [dbo].[Producto_En_Almacen] CHECK CONSTRAINT [FK_Producto_En_Almacen_Producto]
+GO
+ALTER TABLE [dbo].[Responsable_Entrega]  WITH CHECK ADD  CONSTRAINT [FK_Responsable_Entrega_Chofer] FOREIGN KEY([ID_Chofer])
+REFERENCES [dbo].[Chofer] ([ID_Chofer])
+GO
+ALTER TABLE [dbo].[Responsable_Entrega] CHECK CONSTRAINT [FK_Responsable_Entrega_Chofer]
+GO
+ALTER TABLE [dbo].[Responsable_Entrega]  WITH CHECK ADD  CONSTRAINT [FK_Responsable_Entrega_Cliente] FOREIGN KEY([ID_Cliente])
+REFERENCES [dbo].[Cliente] ([ID_Cliente])
+GO
+ALTER TABLE [dbo].[Responsable_Entrega] CHECK CONSTRAINT [FK_Responsable_Entrega_Cliente]
+GO
+ALTER TABLE [dbo].[Solicitud_Material]  WITH CHECK ADD  CONSTRAINT [FK_Solicitud_Material_Cliente] FOREIGN KEY([ID_Cliente])
+REFERENCES [dbo].[Cliente] ([ID_Cliente])
+GO
+ALTER TABLE [dbo].[Solicitud_Material] CHECK CONSTRAINT [FK_Solicitud_Material_Cliente]
+GO
+ALTER TABLE [dbo].[Solicitud_Material]  WITH CHECK ADD  CONSTRAINT [FK_Solicitud_Material_Materia_Prima] FOREIGN KEY([ID_Material])
+REFERENCES [dbo].[Materia_Prima] ([ID_Material])
+GO
+ALTER TABLE [dbo].[Solicitud_Material] CHECK CONSTRAINT [FK_Solicitud_Material_Materia_Prima]
+GO
+ALTER TABLE [dbo].[Unidad_Chofer]  WITH CHECK ADD  CONSTRAINT [FK_Unidad_Chofer_Camion] FOREIGN KEY([Placas])
+REFERENCES [dbo].[Camion] ([Placas])
+GO
+ALTER TABLE [dbo].[Unidad_Chofer] CHECK CONSTRAINT [FK_Unidad_Chofer_Camion]
+GO
+ALTER TABLE [dbo].[Unidad_Chofer]  WITH CHECK ADD  CONSTRAINT [FK_Unidad_Chofer_Chofer] FOREIGN KEY([ID_Chofer])
+REFERENCES [dbo].[Chofer] ([ID_Chofer])
+GO
+ALTER TABLE [dbo].[Unidad_Chofer] CHECK CONSTRAINT [FK_Unidad_Chofer_Chofer]
+GO
+ALTER TABLE [dbo].[Vende]  WITH CHECK ADD  CONSTRAINT [FK_Vende_Producto] FOREIGN KEY([ID_Producto])
+REFERENCES [dbo].[Producto] ([ID_Producto])
+GO
+ALTER TABLE [dbo].[Vende] CHECK CONSTRAINT [FK_Vende_Producto]
+GO
+ALTER TABLE [dbo].[Vende]  WITH CHECK ADD  CONSTRAINT [FK_Vende_Proveedor] FOREIGN KEY([ID_Proveedor])
+REFERENCES [dbo].[Proveedor] ([ID_Proveedor])
+GO
+ALTER TABLE [dbo].[Vende] CHECK CONSTRAINT [FK_Vende_Proveedor]
+GO
+/****** Object:  StoredProcedure [dbo].[CrearOrden]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[CrearOrden]
+    @ID_Producto VARCHAR(10),
+    @ID_Cliente INT
+AS
+BEGIN
+    SET NOCOUNT ON
+    INSERT INTO Orden (ID_Producto, ID_Cliente) VALUES (@ID_Producto, @ID_Cliente)
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[EliminarOrden]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[EliminarOrden]
+    @ID_Producto VARCHAR(10),
+    @ID_Cliente INT
+AS
+BEGIN
+    SET NOCOUNT ON
+    DELETE FROM Orden WHERE ID_Producto = @ID_Producto AND ID_Cliente = @ID_Cliente
+END
+GO
+/****** Object:  StoredProcedure [dbo].[ObtenerOrdenesPorCliente]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[ObtenerOrdenesPorCliente]
+    @ID_Cliente INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT * FROM Orden WHERE ID_Cliente = @ID_Cliente;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[ObtenerOrdenesPorProducto]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[ObtenerOrdenesPorProducto]
+    @ID_Producto VARCHAR(10)
+AS
+BEGIN
+    SET NOCOUNT ON
+
+    SELECT * FROM Orden WHERE ID_Producto = @ID_Producto
+END
+GO
+/****** Object:  StoredProcedure [dbo].[SP_TelefonoCliente]    Script Date: 11/07/2023 01:09:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create procedure [dbo].[SP_TelefonoCliente]
+@ClientID int,
+@Telefono nvarchar(24) output
+as
+begin
+select @Telefono = Telefono
+from Cliente
+where ID_Cliente = @ClientID
+return
+end
+GO
+CREATE TRIGGER Inserciones_Invalidas
+ON Cliente
+INSTEAD OF INSERT
+AS
+BEGIN
+    IF EXISTS (SELECT * FROM inserted WHERE ID_Cliente < 0)
+    BEGIN
+        RAISERROR ('No se permiten números negativos en el campo ID_Cliente.', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+    ELSE
+    BEGIN
+        INSERT INTO Cliente (ID_Cliente, Nombre, Apellido_Paterno, Apellido_Materno, Telefono, Correo, RFC, Calle, Num_Interior, Num_Exterior, Codigo_Postal)
+        SELECT ID_Cliente, Nombre, Apellido_Paterno, Apellido_Materno, Telefono, Correo, RFC, Calle, Num_Interior, Num_Exterior, Codigo_Postal
+        FROM inserted;
+    END
+END
+GO
+
+CREATE TRIGGER Actualizacion_Invalida
+ON Cliente
+INSTEAD OF UPDATE
+AS
+BEGIN
+    IF EXISTS (SELECT * FROM inserted WHERE ID_Cliente < 0)
+    BEGIN
+        RAISERROR ('No se permite actualizar el campo ID_Cliente con un número negativo.', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+    ELSE
+    BEGIN
+        UPDATE c
+        SET c.Nombre = i.Nombre,
+            c.Apellido_Paterno = i.Apellido_Paterno,
+            c.Apellido_Materno = i.Apellido_Materno,
+            c.Telefono = i.Telefono,
+            c.Correo = i.Correo,
+            c.RFC = i.RFC,
+            c.Calle = i.Calle,
+            c.Num_Interior = i.Num_Interior,
+            c.Num_Exterior = i.Num_Exterior,
+            c.Codigo_Postal = i.Codigo_Postal
+        FROM Cliente c
+        INNER JOIN inserted i ON c.ID_Cliente = i.ID_Cliente;
+    END
+END
+GO
+
+CREATE TRIGGER Cliente_insertado
+ON Cliente FOR INSERT
+AS
+DECLARE @id INT
+DECLARE @usuario VARCHAR(20)
+SELECT @id=ID_Cliente FROM inserted
+SELECT @usuario= CURRENT_USER
+INSERT INTO Log_cliente VALUES (@usuario, 'Insertado', getdate(), 'persona', @id)
+GO
+
+CREATE TRIGGER Cliente_eliminado
+ON Cliente FOR DELETE
+AS
+DECLARE @id INT
+DECLARE @usuario VARCHAR(20)
+SELECT @id=ID_Cliente FROM deleted
+SELECT @usuario = CURRENT_USER
+INSERT INTO Log_cliente VALUES (@usuario, 'Eliminado', getdate(), 'persona', @id)
+GO
+
+CREATE TRIGGER Cliente_modificado
+ON Cliente FOR UPDATE
+AS
+DECLARE @id INT
+DECLARE @usuario VARCHAR(20)
+SELECT @id=ID_Cliente FROM inserted
+SELECT @usuario = CURRENT_USER
+INSERT INTO Log_Cliente VALUES (@usuario, 'Modificado', getdate(), 'persona', @id)
+GO
+
+USE [master]
+GO
+ALTER DATABASE [Integrador] SET  READ_WRITE 
+GO
