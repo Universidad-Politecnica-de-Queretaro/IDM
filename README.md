@@ -1,2 +1,0 @@
-# IDM
- Proyecto integrador
