@@ -1,0 +1,31 @@
+{
+  "extends": [
+    "development"
+  ],
+  "hints": {
+    "compat-api/css": [
+      "default",
+      {
+        "ignore": [
+          "text-size-adjust",
+          "-webkit-overflow-scrolling"
+        ]
+      }
+    ],
+    "detect-css-reflows/paint": "off",
+    "detect-css-reflows/composite": "off"
+  },
+  "browserslist": [
+    "defaults",
+    "not ie 11",
+    "not and_chr <= 115",
+    "not and_ff <= 115",
+    "not chrome <= 115",
+    "not edge <= 115",
+    "not firefox <= 116",
+    "not ios_saf <= 16.5",
+    "not opera <= 101",
+    "not safari <= 16.5",
+    "not samsung <= 21"
+  ]
+}
